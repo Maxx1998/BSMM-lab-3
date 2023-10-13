@@ -27,6 +27,20 @@ dplyr::glimpse(boston_cocktails)
 
 ```{r}
 View(boston_cocktails)
+
+```
+
+```{r}
+library(magrittr)   # the pipe
+library(tidyverse)  # for data wrangling + visualization
+```
+
+```{r}
+library(tidymodels) # for modeling
+```
+
+```{r}
+library(gt)         # for pretty tables
 ```
 
 ```{r}
@@ -39,6 +53,7 @@ DataExplorer::introduce(boston_cocktails)
 ```
 
 ```{r}
+library("magrittr")
 summaryofdataset <- boston_cocktails %>% select(name,category,measure_number) %>%  dplyr::filter(category=="Cocktail Classics") %>% summarise(mediannumber=median(measure_number))
 ```
 
