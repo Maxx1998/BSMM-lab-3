@@ -1,8 +1,8 @@
 ---
 title: "BSMM-lab-3"
 subtitle: "BSMM 8740 Fall 2023"
-author: "Add your name here"
-date: "Add the date here"
+author: "Mahroosa Ibtesaam"
+date: "13-10-2023"
 format: html
 editor: visual
 self-contained: true
@@ -21,25 +21,173 @@ boston_cocktails <- readr::read_csv('data/boston_cocktails.csv')
 
 ### Exercise 1
 
-The median measure amount across across all cocktails is \_\_\_.
+```{r}
+dplyr::glimpse(boston_cocktails)
+```
+
+```{r}
+View(boston_cocktails)
+```
+
+```{r}
+skimr::skim(boston_cocktails)
+
+```
+
+```{r}
+DataExplorer::introduce(boston_cocktails)
+```
+
+```{r}
+summaryofdataset <- boston_cocktails %>% select(name,category,measure_number) %>%  dplyr::filter(category=="Cocktail Classics") %>% summarise(mediannumber=median(measure_number))
+```
+
+```{r}
+summaryofdataset
+```
+
+The median measure amount across across all cocktails is \_\_1\_.
 
 ### Exercise 2
 
-The **Leap Frog Highball** contains \_\_\_ of gin
+```{r}
+pivoted_table <- boston_cocktails |>
+  select(name, category, ingredient, measure_number) |> 
+  pivot_wider(names_from = ingredient, values_from = measure_number, values_fill = 0)
+```
+
+```{r}
+View(pivoted_table)
+```
+
+```{r}
+cleaned_table <- pivoted_table |>
+  janitor::clean_names()
+```
+
+```{r}
+View(cleaned_table)
+```
+
+```{r}
+gin_in_leap_frog_highball <- cleaned_table |>drop_na()|>
+  filter(name == "Leap Frog Highball") |>
+  select(gin)
+
+print(gin_in_leap_frog_highball)
+```
+
+```{r}
+print(gin_in_leap_frog_highball)
+```
+
+The **Leap Frog Highball** contains \_\_2 oz\_ of gin
 
 ### Exercise 3
 
-\_\_\_ predictor variables are prepped by the recipe.
+```{r}
+# Load the necessary package
+
+library(recipes)
+
+summary(recipe_obj <- recipe(~ ., data = cleaned_table))
+```
+
+```{r}
+# Create a recipe object without a target, assign 'id' roles to "name" and "category"
+recipe_obj <- recipe(~ ., data =cleaned_table) %>%
+  update_role(name, category, new_role = "id") %>% recipes::step_normalize(all_numeric()) %>%step_pca(all_numeric())
+
+# Prepare the data
+prepped_data <- prep(recipe_obj)
+
+summary(prepped_data)
+```
+
+```{r}
+# Data summary
+prepped_data
+```
+
+\_40\_\_ predictor variables are prepped by the recipe.
 
 ### Exercise 4
 
-On average the most used ingredient in the Boston Cocktails dataset is \_\_\_\_.
+```{r}
+tidy_info <- recipes::tidy(prepped_data)
+tidy_info
+```
+
+```{r}
+tidy_normalized_values <- prepped_data
+
+tidy_normalized_values %>% recipes::tidy() 
+```
+
+```{r}
+tidy_normalized_values %>% recipes::tidy(1) %>% dplyr::arrange(desc(value))
+```
+
+```{r}
+tidy_normalized_values
+```
+
+```{r}
+most_used_ingredient <- boston_cocktails %>%
+  group_by(ingredient) %>%
+  summarise(average_count = mean(measure_number)) %>%
+  arrange(desc(average_count))   # without normalization method
+```
+
+On average the most used ingredient in the Boston Cocktails dataset is \_Orange juice\_\_\_.
 
 ### Exercise 5
 
-Describe describe the drinks represented by PC1?
+```{r}
+# Load the necessary packages
+library(recipes)
+library(dplyr)
+library(ggplot2)
+library(forcats)
+
+drinks_data <- tidy_normalized_values %>% recipes::tidy(2)
+
+View(drinks_data)
+
+drinks_data_1_to_5 <- drinks_data %>% dplyr::filter(component %in% c("PC1","PC2","PC3","PC4","PC5")) %>% dplyr::mutate(order = forcats::fct_inorder(component))
+
+view(drinks_data_1_to_5)
+
+drinks_data_1_to_5 %>% ggplot(aes(value, terms, fill = terms)) +
+geom_col(show.legend = FALSE) +
+facet_wrap(~component, nrow = 1) +
+labs(y = NULL) +
+theme(axis.text=element_text(size=7),
+      axis.title=element_text(size=14,face="bold"))
+```
+
+Describe describe the drinks represented by PC1?Less calories,sweet & syrupy, mildly bitter and moderate alcohol content
 
 ### Exercise 6
+
+```{r}
+
+
+
+# Filter for PCA components PC1 to PC4
+drinks_data %>%
+  filter(component %in% c("PC1", "PC2", "PC3", "PC4")) %>%  
+  group_by(component) %>%
+  slice_max(order_by = abs(value), n = 8) %>%
+  gt() %>%
+  data_color(
+    columns = c(value),
+    colors = scales::col_numeric(
+      palette = c("red", "green"),
+      domain = c(-1, 1)
+    )
+  )
+```
 
 The characteristic alcoholic beverage of each of the first 4 principle components is \_\_\_.
 
