@@ -193,4 +193,11 @@ The characteristic alcoholic beverage of each of the first 4 principle component
 
 ### Exercise 7
 
+```{r}
+recipes::bake(prepped_data,cleaned_table) %>% ggplot(aes(PC1, PC2, label = name)) +
+  geom_point(aes(color = category), alpha = 0.7, size = 2) +
+  geom_text(check_overlap = TRUE, hjust = "inward") + 
+  labs(color = NULL)
+```
+
 How would you interpret the results of a PCA analysis for a client?
